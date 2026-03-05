@@ -120,7 +120,7 @@ pretty_density <- ggplot(obs_doy, aes(x = doy, fill = pheno, group = pheno)) +
     x = "Month",
     y = "Relative observation density",
     fill = "Phenology stage",
-    title = "Seasonal Phenology Timing")
+    title = "Seasonal Phenology")
 
 # A note on smoothing: under-smoothed data looks noisy and won't convey overall trends,
 # while over-smoothed data erases valuable detail. We recommend starting low (adjust = .5)
@@ -129,20 +129,3 @@ pretty_density <- ggplot(obs_doy, aes(x = doy, fill = pheno, group = pheno)) +
 
 print(pretty_density)
 
-######### this was me fiddling around with the other graph, tbh I don't know which one is accurate to use ######
-obs_month_test <- obs %>%
-  filter(pheno %in% c("Flowering", "Fruits or Seeds", "Flower Buds")) %>%
-  mutate(
-    date = as.Date(observed_on),
-    month = factor(format(date, "%b"), levels = month.abb)
-  )
-
-test <- ggplot(obs_month_test, aes(x = as.numeric(month), fill = pheno, group = pheno)) +
-  geom_density(alpha = 0.4, adjust = 1.5) +
-  scale_x_continuous(
-    breaks = 3:11,
-    labels = month.abb[3:11]
-  ) +
-  theme_minimal()
-
-print(test)
