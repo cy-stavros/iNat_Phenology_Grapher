@@ -76,56 +76,85 @@ obs <- pheno_grabber("Diapensia lapponica", "64492")
 
 ##### Phenology Grapher #####
 
-# This creates a new, filtered and updated dataframe to remove "No Fruits or Flowers"
-# to clean up the data (low sample size), and adds a new variable of only months 
-# to plot the data. Feel free to clean up or edit your data as needed! 
-# (e.g. you may want to add No Fruits or Flowers back in or remove others phases based on sample size)
-obs_month <- obs %>%
+# This creates a new, filtered and updated dataframe to remove the "No Fruits or Flowers" annotation to clean up the data, and adds two new variables: 
+# "month", and day of year ("doy") which essentially allows us to treat dates as a continuous variable. 
+# Feel free to clean up or edit your data as needed (based on your sample size or what annotations you want to use)!
+
+obs_2 <- obs %>%
   filter(pheno %in% c("Flowering", "Fruits or Seeds", "Flower Buds")) %>%
   mutate(
     date  = as.Date(observed_on),
-    month = factor(format(date, "%b"), levels = month.abb))
-
-# This creates a bar graph that shows the frequency (count) of each phenology stage by month, 
-# using the variable we created above.
-janky <- ggplot(obs_month, aes(x = month, fill = pheno)) +
-  geom_bar(position = "stack", alpha = .9) +
-  theme_minimal() +
-  labs(y = "Number of observations")
-
-print(janky)
-
-#Once again, this is creating a new, filtered and updated dataframe that removes 
-# "No Fruits or Flowers" to clean up the data, and adds a new variable of day of year (doy) 
-# which essentially allows us to use date as a continuous variable. 
-obs_doy <- obs %>%
-  filter(pheno %in% c("Flowering", "Fruits or Seeds", "Flower Buds")) %>%
-  mutate(
-    date = as.Date(observed_on),
+    month = factor(format(date, "%b"), levels = month.abb),
     doy  = as.numeric(format(date, "%j")))
 
-#This determines what day of year corresponds to what month to center the label with the middle of the month.
-month_breaks <- c(15,46,74,105,135,166,196,227,258,288,319,349)
+####################
+##### bar graph ####
+####################
 
-# This creates a density plot plotted by day of year (doy) and then smoothed. 
-# It shows the relative density of each phenology stage.
-pretty_density <- ggplot(obs_doy, aes(x = doy, fill = pheno, group = pheno)) +
-  geom_density(alpha = .4, adjust = .5) + # "adjust" here controls the amount of smoothing!
+# This creates a bar graph that shows the frequency (count) of each pheno phase by month, using the "month" variable we created above.
+
+janky_bar <- ggplot(obs_2, aes(x = month, fill = pheno)) +
+  geom_bar(position = "stack", alpha = .9) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set1") +
+  labs(
+    y = "Number of observations",
+    x = "Month",
+    fill = "Pheno phase",
+    title = "Seasonal Phenology Timing")
+
+print(janky_bar)
+
+########################
+##### density plot #####
+########################
+
+# This creates a density plot plotted by the "doy" variable we made and then bins it by month to make it easier to read.
+# It shows the relative density of each pheno phase. I like this one because it clearly shows the observations starting in May and ending in October.
+
+start_month <- 5   # Change these numbers to change your start and end view on the graph!
+end_month   <- 10
+
+month_breaks <- as.numeric(format(
+  as.Date(paste0("2001-", start_month:end_month, "-15")), "%j"))
+
+month_limits <- range(month_breaks) + c(-15, 15)
+
+pretty_density <- ggplot(obs_2, aes(doy, fill = pheno, group = pheno)) +
+  geom_density(alpha = .4, adjust = 1.5, # If you want to change the smoothing, change the "adjust" values. 1.5 is similar to inat!
+               from = month_limits[1], to = month_limits[2]) +
   scale_x_continuous(
-    limits = c(121, 305), #this displays April to October, but you can change this 
+    limits = month_limits,
     breaks = month_breaks,
-    labels = month.abb) +
+    labels = month.abb[start_month:end_month]) +
   theme_minimal() +
   labs(
     x = "Month",
     y = "Relative observation density",
-    fill = "Phenology stage",
-    title = "Seasonal Phenology")
-
-# A note on smoothing: under-smoothed data looks noisy and won't convey overall trends,
-# while over-smoothed data erases valuable detail. We recommend starting low (adjust = .5)
-# and increasing from there. The amount of smoothing you can get away with will
-# also be determined by your sample size for each pheno phase.
+    fill = "Pheno phase",
+    title = "Seasonal Phenology Timing")
 
 print(pretty_density)
+
+##################
+#### option 3 ####
+##################
+
+# This is another way to make a similar graph using months instead of day of year. Essentially, this sorts by month rather than by day. 
+# This one will automatically graph based on what months have data available, but I don't think it does as good of a job at showing in what months the observations begin and end. 
+# Also, the y-axis changes so it may be less accurate?
+
+graph_option3 <- ggplot(obs_2, aes(x = as.numeric(month), fill = pheno, group = pheno)) +
+  geom_density(alpha = 0.4, adjust = 1.5) +
+  scale_x_continuous(
+    breaks = 1:12,
+    labels = month.abb[1:12]) +
+  theme_minimal() +
+  labs(
+    x = "Month",
+    y = "Relative observation density",
+    fill = "Pheno phase",
+    title = "Seasonal Phenology Timing")
+
+print(graph_option3)
 
