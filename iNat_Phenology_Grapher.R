@@ -113,7 +113,7 @@ pretty_density <- ggplot(obs_2, aes(doy, fill = pheno, group = pheno)) +
   labs(
     x = "Month",
     y = "Relative observation density",
-    fill = "Pheno phase",
+    fill = "Phenophase",
     title = "Seasonal Phenology Timing")
 
 print(pretty_density)
